@@ -1,0 +1,6 @@
+Launcher.dat
+*.bin
+*.elf
+/build
+
+.DS_Store
