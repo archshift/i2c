@@ -45,8 +45,27 @@ inline vu8* const i2cGetCntReg(u8 bus_id) {
 
 //-----------------------------------------------------------------------------
 
+void swiDelay(u32 delay)
+{
+    for (; delay != 0; delay--);
+        __asm__ __volatile__ ("");
+}
+
+//-----------------------------------------------------------------------------
+
+static u32 i2cCurrentDelay = 0;
+
 inline void i2cWaitBusy(u8 bus_id) {
     while (*i2cGetCntReg(bus_id) & 0x80);
+    swiDelay(i2cCurrentDelay);
+}
+
+inline void i2cSetDelay(u8 bus_id) {
+    if (bus_id == 0x4A) {
+        i2cCurrentDelay = 0x180;
+    } else {
+        i2cCurrentDelay = 0;
+    }
 }
 
 inline bool i2cGetResult(u8 bus_id) {
@@ -82,6 +101,8 @@ u8 i2cReadRegister(u8 dev_id, u8 reg) {
     u8 bus_id = i2cGetDeviceBusId(dev_id);
     u8 dev_addr = i2cGetDeviceRegAddr(dev_id);
 
+    i2cSetDelay(bus_id);
+
     for (size_t i = 0; i < 8; i++) {
         if (i2cSelectDevice(bus_id, dev_addr) && i2cSelectRegister(bus_id, reg)) {
             if (i2cSelectDevice(bus_id, dev_addr | 1)) {
@@ -101,6 +122,8 @@ bool i2cReadRegisterBuffer(unsigned int dev_id, int reg, u8* buffer, size_t buf_
     u8 bus_id = i2cGetDeviceBusId(dev_id);
     u8 dev_addr = i2cGetDeviceRegAddr(dev_id);
 
+    i2cSetDelay(bus_id);
+
     size_t j = 0;
     while (!i2cSelectDevice(bus_id, dev_addr)
         || !i2cSelectRegister(bus_id, reg)
@@ -119,7 +142,7 @@ bool i2cReadRegisterBuffer(unsigned int dev_id, int reg, u8* buffer, size_t buf_
             *i2cGetCntReg(bus_id) = 0xF0;
             i2cWaitBusy(bus_id);
             buffer[i] = *i2cGetDataReg(bus_id);
-          }
+        }
     }
 
     i2cWaitBusy(bus_id);
@@ -132,6 +155,8 @@ bool i2cReadRegisterBuffer(unsigned int dev_id, int reg, u8* buffer, size_t buf_
 bool i2cWriteRegister(u8 dev_id, u8 reg, u8 data) {
     u8 bus_id = i2cGetDeviceBusId(dev_id);
     u8 dev_addr = i2cGetDeviceRegAddr(dev_id);
+
+    i2cSetDelay(bus_id);
 
     for (int i = 0; i < 8; i++) {
         if (i2cSelectDevice(bus_id, dev_addr) && i2cSelectRegister(bus_id, reg)) {

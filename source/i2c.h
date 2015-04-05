@@ -21,7 +21,10 @@ const u8 i2cGetDeviceRegAddr(u8 device_id);
 vu8* const i2cGetDataReg(u8 bus_id);
 vu8* const i2cGetCntReg(u8 bus_id);
 
+void swiDelay(u32 delay);
+
 void i2cWaitBusy(u8 bus_id);
+void i2cSetDelay(u8 bus_id);
 bool i2cGetResult(u8 bus_id);
 u8 i2cGetData(u8 bus_id);
 void i2cStop(u8 bus_id, u8 arg0);
